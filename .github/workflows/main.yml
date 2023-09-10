@@ -25,7 +25,7 @@ jobs:
         run: npm install
 
       - name: Build Expo app
-        run: expo build:android --clear-credentials
+        run: eas build -p android 
 
       - name: Upload to AppCenter
         run: |
