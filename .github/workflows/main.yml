@@ -1,0 +1,44 @@
+name: Expo CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+
+      - name: Install Expo CLI
+        run: npm install -g expo-cli
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Expo app
+        run: expo build:android --clear-credentials
+
+      - name: Upload to AppCenter
+        run: |
+          appcenter login --token ${{ secrets.APPCENTER_TOKEN }}
+          appcenter codepush release-react -a <owner>/<app_name> -t <target_version> --description "<release_notes>" --mandatory true --sourcemap-output android-release.sourcemap
+
+      - name: Publish to Play Store
+        run: |
+          echo ${{ secrets.KEYSTORE_BASE64 }} | base64 --decode > keystore.jks
+          expo credentials:manager --update --android --keystore-path ./keystore.jks
+          expo publish --non-interactive
+
+      - name: Clean up
+        run: rm -rf keystore.jks
+
+  # Add additional jobs/steps for testing, notifications, etc.
